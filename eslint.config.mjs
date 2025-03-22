@@ -18,4 +18,5 @@ export default defineConfig([
   },
   tseslint.configs.recommended,
   prettierRecomended,
+  { ignores: ['dist/**/*'] },
 ]);
