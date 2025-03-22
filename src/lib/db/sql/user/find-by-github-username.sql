@@ -1,0 +1,1 @@
+SELECT * FROM users WHERE github_username = ${githubUsername}

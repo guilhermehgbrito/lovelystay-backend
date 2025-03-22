@@ -11,8 +11,9 @@
     "format": "prettier --write",
     "prepare": "husky",
     "build": "tsc && tsc-alias",
-    "start:dev": "tsx src/main.ts",
-    "start": "node dist/main.js"
+    "start:dev": "tsx --env-file=.env src/main.ts",
+    "start": "node --env-file=.env dist/main.js",
+    "migrations": "node --env-file=.env scripts/migrations.mjs"
   },
   "keywords": [],
   "author": "Guilherme Brito <dev@guilhermehgbrito.com>",
@@ -47,6 +48,7 @@
   },
   "dependencies": {
     "commander": "^13.1.0",
+    "pg-promise": "^11.13.0",
     "winston": "^3.17.0",
     "zod": "^3.24.2"
   }

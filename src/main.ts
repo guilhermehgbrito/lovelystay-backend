@@ -1,25 +1,45 @@
-import { getGitHubUser } from './lib/github/api/users';
+import './cli';
 import { logger } from './lib/logger';
-import { isFailure } from './logic/result';
+import { db } from './lib/db';
+import { program } from 'commander';
 
-export const main = async () => {
-  const args = process.argv.slice(2);
-  const username = args[0];
-
-  const user = await getGitHubUser({ username });
-
-  if (isFailure(user)) {
-    logger.error(user.error);
-    return;
-  }
-
-  logger.info({
-    login: user.data.login,
-    name: user.data.name,
-    email: user.data.email,
-    location: user.data.location,
-    bio: user.data.bio,
-  });
+/**
+ * Handle shutdown of the application
+ */
+const handleShutdown = async () => {
+  await db.$pool.end();
 };
 
-main();
+/**
+ * Add shutdown hooks to gracefully shutdown the application
+ */
+const addShutdownHooks = () => {
+  ['SIGINT', 'SIGTERM', 'uncaughtException', 'unhandledRejection'].forEach(
+    (signal) => {
+      process.on(signal, async () => {
+        logger.info(`Received ${signal}, shutting down...`);
+        await handleShutdown();
+      });
+    },
+  );
+};
+
+/**
+ * Main entry point of the application
+ */
+export const main = async () => {
+  await program
+    .showHelpAfterError()
+    .showSuggestionAfterError()
+    .parseAsync(process.argv);
+};
+
+addShutdownHooks();
+
+main()
+  .then(async () => {
+    await handleShutdown();
+  })
+  .catch((error) => {
+    logger.error(error);
+  });
