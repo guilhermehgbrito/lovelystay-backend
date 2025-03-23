@@ -81,22 +81,29 @@ const languageOption = new Option(
   'The language of the users to fetch',
 );
 
+const pageOption = new Option('-p, --page <page>', 'The page number to fetch')
+  .default('1')
+  .argParser((value) => parseInt(value) || 1);
+
+const limitOption = new Option(
+  '-l, --limit <limit>',
+  'The limit of users to fetch',
+)
+  .default(USER_LISTING_DEFAULT_LIMIT.toString())
+  .argParser((value) => parseInt(value) || USER_LISTING_DEFAULT_LIMIT);
+
 user
   .command('list')
   .description('List users')
   .addOption(outputTypeOption)
-  .option('-p, --page <page>', 'The page number to fetch', '1')
-  .option(
-    '-l, --limit <limit>',
-    'The number of users to fetch',
-    USER_LISTING_DEFAULT_LIMIT.toString(),
-  )
+  .addOption(pageOption)
+  .addOption(limitOption)
   .option('--lo, --location <location>', 'The location of the users to fetch')
   .addOption(languageOption)
   .action(async (options) => {
     const pageOptions = {
-      page: parseInt(options.page),
-      limit: parseInt(options.limit),
+      page: options.page,
+      limit: options.limit,
     };
 
     const languages = options.language ? [options.language] : options.languages;
