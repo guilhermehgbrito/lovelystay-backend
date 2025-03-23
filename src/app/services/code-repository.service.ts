@@ -1,4 +1,10 @@
-import { success, isFailure, Result, FailureError } from '@/logic/result';
+import {
+  success,
+  isFailure,
+  Result,
+  FailureError,
+  failure,
+} from '@/logic/result';
 import { findByGithubUsername } from './user.service';
 import { GitHubErrorCodes, GitHubRepository } from '@/lib/github/types';
 import {
@@ -11,7 +17,7 @@ import { logger } from '@/lib/logger';
 
 export type FetchAndSaveCodeRepositoriesParams = {
   githubUsername: string;
-  ownerId: number;
+  ownerId?: number;
 };
 
 export type FetchAndSaveCodeRepositoriesErrorCodes =
@@ -32,11 +38,26 @@ export type FetchAndSaveCodeRepositoriesResult = Result<
 export const fetchAndSaveCodeRepositories = async (
   params: FetchAndSaveCodeRepositoriesParams,
 ): Promise<FetchAndSaveCodeRepositoriesResult> => {
-  const user = await findByGithubUsername({
-    githubUsername: params.githubUsername,
-  });
+  let ownerId = params.ownerId;
 
-  if (isFailure(user)) return user;
+  if (!ownerId) {
+    const user = await findByGithubUsername({
+      githubUsername: params.githubUsername,
+    });
+
+    if (isFailure(user)) return user;
+
+    if (!user.data)
+      return failure<FetchAndSaveCodeRepositoriesError>({
+        code: 'NOT_FOUND',
+        cause: {
+          message: 'User not found',
+          username: params.githubUsername,
+        },
+      });
+
+    ownerId = user.data.id;
+  }
 
   let totalSaved = 0;
   let totalFailed = 0;
@@ -60,7 +81,7 @@ export const fetchAndSaveCodeRepositories = async (
 
     const savedRepositories = await db.codeRepositories.saveMany(
       repositories.map((r, i) => ({
-        ownerId: params.ownerId,
+        ownerId,
         name: r.name,
         description: r.description,
         remoteName: 'github',

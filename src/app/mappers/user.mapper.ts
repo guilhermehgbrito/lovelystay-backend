@@ -11,7 +11,7 @@ import { User } from '../models/user.model';
 const fromGithubUserToSaveUserParams = (user: GitHubUser): SaveUserParams => {
   return {
     githubId: user.id,
-    githubUsername: user.login,
+    githubUsername: user.login.toLowerCase(),
     name: user.name || user.login,
     email: user.email,
     location: user.location,

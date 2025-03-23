@@ -136,6 +136,10 @@ export const getGitHubUserRepositoriesStream = async function* ({
       break;
     }
 
+    if (!response.data.repositories.length) {
+      break;
+    }
+
     yield response.data.repositories;
 
     nextPage = response.data.nextPage;

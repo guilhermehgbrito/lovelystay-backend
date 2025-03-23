@@ -6,6 +6,8 @@ import { db } from './lib/db';
  * Handle shutdown of the application
  */
 const handleShutdown = async () => {
+  if (db.$pool.ending || db.$pool.ended) return;
+
   await db.$pool.end();
 };
 
@@ -13,14 +15,14 @@ const handleShutdown = async () => {
  * Add shutdown hooks to gracefully shutdown the application
  */
 const addShutdownHooks = () => {
-  ['SIGINT', 'SIGTERM', 'uncaughtException', 'unhandledRejection'].forEach(
-    (signal) => {
-      process.on(signal, async () => {
-        logger.info(`Received ${signal}, shutting down...`);
-        await handleShutdown();
-      });
-    },
-  );
+  ['SIGINT', 'SIGTERM'].forEach((signal) => {
+    const handler = async () => {
+      logger.info(`Received ${signal}, shutting down...`);
+      await handleShutdown();
+    };
+
+    process.once(signal, handler);
+  });
 };
 
 /**

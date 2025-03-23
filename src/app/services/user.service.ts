@@ -16,11 +16,11 @@ export type FindByGithubUsernameError =
 
 export type FindByGithubUsernameResult = Result<
   FindByGithubUsernameError,
-  User
+  User | null
 >;
 
 /**
- * Find a user by their github username, if the user does not exist in the database, it will be fetched from the github api and saved to the database
+ * Find a user by their github username
  * @param {FindByGithubUsernameParams} params
  * @returns {Promise<FindByGithubUsernameResult>}
  */
@@ -31,9 +31,7 @@ export const findByGithubUsername = async (
 
   if (isFailure(userFromDb)) return userFromDb;
 
-  if (userFromDb.data) return success(userFromDb.data);
-
-  return await fetchFromGithubAndSave(params);
+  return success(userFromDb.data);
 };
 
 export type FetchFromGithubAndSaveParams = {
