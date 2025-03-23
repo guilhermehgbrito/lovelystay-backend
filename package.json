@@ -33,6 +33,7 @@
     "@eslint/js": "^9.23.0",
     "@swc/jest": "^0.2.37",
     "@types/node": "^22.13.11",
+    "@types/parse-link-header": "^2.0.3",
     "eslint": "^9.23.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.3",
@@ -48,6 +49,7 @@
   },
   "dependencies": {
     "commander": "^13.1.0",
+    "parse-link-header": "^2.0.0",
     "pg-promise": "^11.13.0",
     "winston": "^3.17.0",
     "zod": "^3.24.2"

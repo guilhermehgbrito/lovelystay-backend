@@ -1,9 +1,13 @@
 import { FailureError, isFailure, Result, success } from '@/logic/result';
-import { SaveUserParams } from '../@types/user';
-import { getGitHubUser } from '@/lib/github/api/users';
+import {
+  getGitHubUser,
+  getGitHubUserRepositories,
+} from '@/lib/github/api/users';
 import { db } from '@/lib/db';
 import { GitHubErrorCodes } from '@/lib/github/types';
 import { User } from '../models/user.model';
+import { fetchAndSaveCodeRepositories } from './code-repository.service';
+import { userMapper } from '../mappers/user.mapper';
 
 export type FindByGithubUsernameParams = {
   githubUsername: string;
@@ -32,41 +36,53 @@ export const findByGithubUsername = async (
 
   if (userFromDb.data) return success(userFromDb.data);
 
-  const userFromGithub = await getGitHubUser({
-    username: params.githubUsername,
-  });
-
-  if (isFailure(userFromGithub)) return userFromGithub;
-
-  return findFromGithubAndSave(params);
+  return await fetchFromGithubAndSave(params);
 };
+
+export type FetchFromGithubAndSaveParams = {
+  githubUsername: string;
+};
+
+export type FetchFromGithubAndSaveErrorCodes = 'UNKNOWN' | GitHubErrorCodes;
+export type FetchFromGithubAndSaveError =
+  FailureError<FetchFromGithubAndSaveErrorCodes>;
+export type FetchFromGithubAndSaveResult = Result<
+  FetchFromGithubAndSaveError,
+  User
+>;
 
 /**
  * Find a user from the github api and save it to the database
- * @param {FindByGithubUsernameParams} params
- * @returns {Promise<FindByGithubUsernameResult>}
+ * @param {FetchFromGithubAndSaveParams} params
+ * @returns {Promise<FetchFromGithubAndSaveResult>}
  */
-export const findFromGithubAndSave = async (
-  params: FindByGithubUsernameParams,
-): Promise<FindByGithubUsernameResult> => {
+export const fetchFromGithubAndSave = async (
+  params: FetchFromGithubAndSaveParams,
+): Promise<FetchFromGithubAndSaveResult> => {
   const userFromGithub = await getGitHubUser({
     username: params.githubUsername,
   });
 
   if (isFailure(userFromGithub)) return userFromGithub;
 
-  const user: SaveUserParams = {
-    githubId: userFromGithub.data.id,
-    githubUsername: userFromGithub.data.login,
-    name: userFromGithub.data.name || userFromGithub.data.login,
-    email: userFromGithub.data.email,
-    location: userFromGithub.data.location,
-    bio: userFromGithub.data.bio,
-  };
-
-  const userFromDb = await db.users.save(user);
+  const userFromDb = await db.users.save(
+    userMapper.fromGithubUserToSaveUserParams(userFromGithub.data),
+  );
 
   if (isFailure(userFromDb)) return userFromDb;
 
-  return success(userFromDb.data!);
+  const repositoriesFromGithub = await getGitHubUserRepositories({
+    username: params.githubUsername,
+  });
+
+  if (isFailure(repositoriesFromGithub)) return repositoriesFromGithub;
+
+  const repositoriesCount = await fetchAndSaveCodeRepositories({
+    githubUsername: params.githubUsername,
+    ownerId: userFromDb.data.id,
+  });
+
+  if (isFailure(repositoriesCount)) return repositoriesCount;
+
+  return success(userFromDb.data);
 };

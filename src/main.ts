@@ -41,5 +41,9 @@ main()
     await handleShutdown();
   })
   .catch((error) => {
-    logger.error(error);
+    logger.error({
+      message: 'An error occurred',
+      error: error.message,
+      stack: error.stack,
+    });
   });

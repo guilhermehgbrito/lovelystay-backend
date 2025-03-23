@@ -1,2 +1,2 @@
 lint-staged
-pnpm test -- --passWithNoTests
+pnpm test --passWithNoTests

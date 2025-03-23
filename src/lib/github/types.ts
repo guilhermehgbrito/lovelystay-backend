@@ -108,7 +108,8 @@ export type GitHubErrorCodes =
   | 'NOT_FOUND'
   | 'FORBIDDEN'
   | 'UNAUTHORIZED'
-  | 'UNKNOWN';
+  | 'UNKNOWN'
+  | 'INVALID_PAGE';
 
 export type GitHubError = FailureError<GitHubErrorCodes>;
 
