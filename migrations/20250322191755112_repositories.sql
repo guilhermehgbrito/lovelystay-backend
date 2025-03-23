@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS code_repositories (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE code_repositories DROP CONSTRAINT IF EXISTS code_repositories_owner_id_idx;
 ALTER TABLE code_repositories ADD CONSTRAINT code_repositories_owner_id_idx UNIQUE (owner_id, name);
 
 CREATE OR REPLACE FUNCTION code_repositories_languages_transform() RETURNS TRIGGER AS $$

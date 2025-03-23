@@ -96,3 +96,24 @@ export const listUsers = async (
 
   return success(users.data);
 };
+
+export type FilterUsersParams = {
+  page: number;
+  limit?: number;
+  location?: string;
+  languages?: string[];
+};
+
+export type FilterUsersErrorCodes = 'UNKNOWN';
+export type FilterUsersError = FailureError<FilterUsersErrorCodes>;
+export type FilterUsersResult = Result<FilterUsersError, User[]>;
+
+export const filterUsers = async (
+  params: FilterUsersParams,
+): Promise<FilterUsersResult> => {
+  const users = await db.users.filterUsers(params);
+
+  if (isFailure(users)) return users;
+
+  return success(users.data);
+};

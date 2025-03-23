@@ -7,6 +7,7 @@ import {
   UserRepository,
   FindByGithubUsernameParams,
   ListUsersParams,
+  FilterUsersParams,
 } from '../@types/user';
 import { USER_LISTING_DEFAULT_LIMIT } from '../constants/user.constants';
 import { UserEntity } from '../entities/user.entity';
@@ -30,7 +31,7 @@ const handleError = <T>(error: unknown): Result<SaveUserError, T> => {
  */
 export const createUserRepository = (
   db: IDatabase<IExtensions>,
-  _: IMain,
+  pgp: IMain,
 ): UserRepository => {
   return {
     save: async (user: SaveUserParams) => {
@@ -62,6 +63,52 @@ export const createUserRepository = (
           offset: (page - 1) * limit,
         });
         return success(result.map(userMapper.fromEntityToModel));
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    filterUsers: async (params: FilterUsersParams) => {
+      const {
+        limit = USER_LISTING_DEFAULT_LIMIT,
+        page = 1,
+        location,
+        languages,
+      } = params;
+
+      const uniqueLanguages = [...new Set(languages)];
+
+      const languagesTsQuery =
+        uniqueLanguages.length > 0
+          ? pgp.as.format(
+              'array_to_tsvector(get_user_languages("users"."id")) @@ to_tsquery($1)',
+              uniqueLanguages.join(' & '),
+            )
+          : '1=1';
+      const locationWhereClause = location
+        ? pgp.as.format('LOWER(location) = LOWER($1)', location)
+        : '1=1';
+
+      const select = `
+        SELECT "users"."id", "users"."github_id", "users"."github_username", "users"."name", "users"."email", "users"."location", "users"."bio", "users"."created_at", "users"."updated_at", get_user_languages("users"."id") AS "languages"
+        FROM "users"
+        WHERE ${locationWhereClause} AND ${languagesTsQuery}
+      `;
+
+      const limitOffset = pgp.as.format('LIMIT $1 OFFSET $2', [
+        limit,
+        (page - 1) * limit,
+      ]);
+
+      try {
+        const result = await db.manyOrNone<
+          UserEntity & { languages: string[] }
+        >(`${select} ${limitOffset}`);
+        return success(
+          result.map((user) => ({
+            ...userMapper.fromEntityToModel(user),
+            languages: user.languages,
+          })),
+        );
       } catch (error) {
         return handleError(error);
       }

@@ -32,6 +32,22 @@ export type ListUsersError = FailureError<ListUsersErrorCodes>;
 
 export type ListUsersResult = Result<ListUsersError, User[]>;
 
+export type FilterUsersParams = {
+  page: number;
+  limit?: number;
+  location?: string;
+  languages?: string[];
+};
+
+export type FilterUsersErrorCodes = 'UNKNOWN';
+export type FilterUsersError = FailureError<FilterUsersErrorCodes>;
+
+export type UserWithLanguages = User & {
+  languages: string[];
+};
+
+export type FilterUsersResult = Result<FilterUsersError, UserWithLanguages[]>;
+
 export type UserRepository = {
   /**
    * Save a user
@@ -53,6 +69,12 @@ export type UserRepository = {
    * @returns {Promise<ListUsersResult>}
    */
   listUsers: (params: ListUsersParams) => Promise<ListUsersResult>;
+  /**
+   * Filter users
+   * @param {FilterUsersParams} params
+   * @returns {Promise<FilterUsersResult>}
+   */
+  filterUsers: (params: FilterUsersParams) => Promise<FilterUsersResult>;
 };
 
 declare global {

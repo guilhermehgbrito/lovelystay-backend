@@ -3,11 +3,14 @@ import { isFailure } from '@/logic/result';
 import {
   findByGithubUsername,
   fetchFromGithubAndSave,
+  filterUsers,
   listUsers,
 } from '@/app/services/user.service';
 import { logger } from '@/lib/logger';
 import { USER_LISTING_DEFAULT_LIMIT } from '@/app/constants/user.constants';
 
+import { User } from '@/app/models/user.model';
+import { UserWithLanguages } from '@/app/@types/user';
 export const user = new Command().command('user').description('User commands');
 const outputTypes = ['json', 'csv', 'table'] as const;
 type OutputType = (typeof outputTypes)[number];
@@ -17,7 +20,7 @@ const outputTypeOption = new Option(
   'The type of output to use',
 )
   .choices(outputTypes)
-  .default('table')
+  .default('json')
   .argParser((value) => value?.toLowerCase());
 
 const printOutput = <T>(data: T, options: { outputType: OutputType }) => {
@@ -73,6 +76,11 @@ user
     printOutput([user.data], { outputType: options.outputType });
   });
 
+const languageOption = new Option(
+  '--la, --languages <language> [languages...]',
+  'The language of the users to fetch',
+);
+
 user
   .command('list')
   .description('List users')
@@ -83,21 +91,51 @@ user
     'The number of users to fetch',
     USER_LISTING_DEFAULT_LIMIT.toString(),
   )
+  .option('--lo, --location <location>', 'The location of the users to fetch')
+  .addOption(languageOption)
   .action(async (options) => {
-    const users = await listUsers({
+    const pageOptions = {
       page: parseInt(options.page),
       limit: parseInt(options.limit),
-    });
+    };
 
-    if (isFailure(users)) {
-      logger.error({
-        message: 'Failed to list users',
-        data: {
-          error: users.error,
-        },
+    const languages = options.language ? [options.language] : options.languages;
+
+    let users: User[] | UserWithLanguages[] = [];
+
+    if (options.location || languages?.length) {
+      const result = await filterUsers({
+        ...pageOptions,
+        location: options.location,
+        languages,
       });
-      return;
+
+      if (isFailure(result)) {
+        logger.error({
+          message: 'Failed to filter users',
+          data: {
+            error: result.error,
+          },
+        });
+        return;
+      }
+
+      users = result.data;
+    } else {
+      const result = await listUsers(pageOptions);
+
+      if (isFailure(result)) {
+        logger.error({
+          message: 'Failed to list users',
+          data: {
+            error: result.error,
+          },
+        });
+        return;
+      }
+
+      users = result.data;
     }
 
-    printOutput(users.data, { outputType: options.outputType });
+    printOutput(users, { outputType: options.outputType });
   });

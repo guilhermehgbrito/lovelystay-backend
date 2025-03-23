@@ -3,11 +3,9 @@ import { writeFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import pgPromise from 'pg-promise';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
-const MIGRATION_FILE_PATH = path.resolve(
-  process.cwd(),
-  'src/lib/db/migrations',
-);
+const MIGRATION_FILE_PATH = path.join(process.cwd(), 'migrations');
 
 /**
  * Create a new migration file
@@ -48,17 +46,15 @@ async function migrate(migrationFilePath: string): Promise<void> {
       },
     );
 
-    console.log(`Running migration: ${migration}`);
+    logger.info(`Running migration: ${migration}`);
     try {
       await db.none(migrationSql);
-      console.log(`Migration ${migration} completed`);
+      logger.info(`Migration ${migration} completed`);
     } catch (error) {
-      console.error(`Migration ${migration} failed: ${error}`);
+      logger.error(`Migration ${migration} failed: ${error}`);
       throw error;
     }
   }
-
-  await db.$pool.end();
 }
 
 export const migrations = new Command()
@@ -74,7 +70,7 @@ migrations
   .addHelpText('after', 'Example: $ migration:new create_users_table')
   .action(async (name) => {
     const migrationFile = await createMigration(name);
-    console.log(`Migration file created: ${migrationFile}`);
+    logger.info(`Migration file created: ${migrationFile}`);
   });
 
 migrations
@@ -83,7 +79,7 @@ migrations
   .action(async () => {
     const migrations = await listMigrations(MIGRATION_FILE_PATH);
     migrations.forEach((migration, index) => {
-      console.log(`${index + 1}. ${migration}`);
+      logger.info(`${index + 1}. ${migration}`);
     });
   });
 

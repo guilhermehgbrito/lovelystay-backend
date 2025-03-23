@@ -1,9 +1,7 @@
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import pgp from 'pg-promise';
 
-// @ts-expect-error This is a workaround to work on dev environment
-const PATH = path.dirname(fileURLToPath(import.meta.url));
+const SQL_FILES_PATH = path.join(process.cwd(), 'sql');
 
 /**
  * Read a sql file
@@ -11,7 +9,7 @@ const PATH = path.dirname(fileURLToPath(import.meta.url));
  * @returns {pgp.QueryFile}
  */
 export const sqlFile = (name: string): pgp.QueryFile => {
-  return new pgp.QueryFile(path.join(PATH, 'sql', name), {
+  return new pgp.QueryFile(path.join(SQL_FILES_PATH, name), {
     minify: true,
   });
 };
