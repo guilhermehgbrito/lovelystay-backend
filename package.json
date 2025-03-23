@@ -13,7 +13,7 @@
     "build": "tsc && tsc-alias",
     "start:dev": "tsx --env-file=.env src/main.ts",
     "start": "node --env-file=.env dist/main.js",
-    "migrations": "node --env-file=.env scripts/migrations.mjs"
+    "migrations": "tsx --env-file=.env src/main.ts migrations"
   },
   "keywords": [],
   "author": "Guilherme Brito <dev@guilhermehgbrito.com>",

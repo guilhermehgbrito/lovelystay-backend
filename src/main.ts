@@ -1,7 +1,6 @@
-import './cli';
+import { program } from './cli';
 import { logger } from './lib/logger';
 import { db } from './lib/db';
-import { program } from 'commander';
 
 /**
  * Handle shutdown of the application

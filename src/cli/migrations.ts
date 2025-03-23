@@ -1,24 +1,20 @@
-#!/usr/bin/env node
-
-import { program } from 'commander';
-import { writeFile, readdir } from 'fs/promises';
-import path from 'path';
+import { Command } from 'commander';
+import { writeFile, readdir } from 'node:fs/promises';
+import path from 'node:path';
 import pgPromise from 'pg-promise';
-import { fileURLToPath } from 'url';
+import { db } from '@/lib/db';
 
-const MIGRATION_FILE_PATH = path.resolve(fileURLToPath(import.meta.url), '../../src/lib/db/migrations');
-
-/**
- * @type {import('pg-promise').IDatabase<any>}
- */
-let db;
+const MIGRATION_FILE_PATH = path.resolve(
+  process.cwd(),
+  'src/lib/db/migrations',
+);
 
 /**
  * Create a new migration file
  * @param {string} name
  * @returns {Promise<string>}
  */
-async function createMigration(name) {
+async function createMigration(name: string): Promise<string> {
   const migrationName = name.replace(/\s+/g, '_');
   const timestamp = new Date().toISOString().replace(/\D/g, '');
   const migrationFile = `${MIGRATION_FILE_PATH}/${timestamp}_${migrationName}.sql`;
@@ -32,7 +28,7 @@ async function createMigration(name) {
  * @param {string} migrationFilePath
  * @returns {Promise<string[]>}
  */
-async function listMigrations(migrationFilePath) {
+async function listMigrations(migrationFilePath: string): Promise<string[]> {
   const migrations = await readdir(migrationFilePath);
   return migrations.filter((migration) => migration.endsWith('.sql'));
 }
@@ -41,15 +37,16 @@ async function listMigrations(migrationFilePath) {
  * Apply all migrations to the database
  * @param {string} migrationFilePath
  */
-async function migrate(migrationFilePath) {
-  db = pgPromise()(process.env.DATABASE_URL);
-
+async function migrate(migrationFilePath: string): Promise<void> {
   const migrations = await listMigrations(migrationFilePath);
 
-  for (const migration of migrations.toSorted()) {
-    const migrationSql = new pgPromise.QueryFile(path.join(migrationFilePath, migration), {
-      minify: true,
-    });
+  for (const migration of migrations.sort()) {
+    const migrationSql = new pgPromise.QueryFile(
+      path.join(migrationFilePath, migration),
+      {
+        minify: true,
+      },
+    );
 
     console.log(`Running migration: ${migration}`);
     try {
@@ -64,20 +61,23 @@ async function migrate(migrationFilePath) {
   await db.$pool.end();
 }
 
-program
-  .enablePositionalOptions()
+export const migrations = new Command()
+  .command('migrations')
+  .description('Migrations commands')
+  .addHelpText('after', 'Example: $ migration new create_users_table')
+  .addHelpText('after', 'Example: $ migration list')
+  .addHelpText('after', 'Example: $ migration up');
+
+migrations
   .command('new <name>')
   .description('Create a new migration file')
-  .addHelpText(
-    'after',
-    'Example: $ migration:new create_users_table'
-  )
+  .addHelpText('after', 'Example: $ migration:new create_users_table')
   .action(async (name) => {
     const migrationFile = await createMigration(name);
     console.log(`Migration file created: ${migrationFile}`);
-  })
+  });
 
-program
+migrations
   .command('list')
   .description('List all migrations')
   .action(async () => {
@@ -87,17 +87,9 @@ program
     });
   });
 
-program
+migrations
   .command('up')
   .description('Run all migrations')
   .action(async () => {
     await migrate(MIGRATION_FILE_PATH);
   });
-
-program.parse(process.argv);
-
-['SIGINT', 'SIGTERM', 'uncaughtException', 'unhandledRejection'].forEach((signal) => {
-  process.on(signal, async () => {
-    await db.$pool.end();
-  });
-});
