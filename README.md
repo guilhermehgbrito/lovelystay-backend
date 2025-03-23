@@ -94,13 +94,15 @@ If you don't provide them, the CLI will use the default values.
 <!-- TOC --><a name="running-the-migrations"></a>
 ### Running the migrations
 
-The migrations are stored in the `src/lib/db/migrations` directory, and run automatically when the Docker container is started.
+The migrations are stored in the `migrations` directory, and run automatically when the Docker container is started.
 
 You can also run the migrations manually using the following command:
 
 ```bash
 pnpm run migrations up
 ```
+
+Remember to run migrations from the root of the project.
 
 <!-- TOC --><a name="running-the-cli"></a>
 ### Running the CLI
