@@ -1,8 +1,5 @@
 import { FailureError, isFailure, Result, success } from '@/logic/result';
-import {
-  getGitHubUser,
-  getGitHubUserRepositories,
-} from '@/lib/github/api/users';
+import { getGitHubUser } from '@/lib/github/api/users';
 import { db } from '@/lib/db';
 import { GitHubErrorCodes } from '@/lib/github/types';
 import { User } from '../models/user.model';
@@ -71,12 +68,6 @@ export const fetchFromGithubAndSave = async (
 
   if (isFailure(userFromDb)) return userFromDb;
 
-  const repositoriesFromGithub = await getGitHubUserRepositories({
-    username: params.githubUsername,
-  });
-
-  if (isFailure(repositoriesFromGithub)) return repositoriesFromGithub;
-
   const repositoriesCount = await fetchAndSaveCodeRepositories({
     githubUsername: params.githubUsername,
     ownerId: userFromDb.data.id,
@@ -85,4 +76,23 @@ export const fetchFromGithubAndSave = async (
   if (isFailure(repositoriesCount)) return repositoriesCount;
 
   return success(userFromDb.data);
+};
+
+export type ListUsersParams = {
+  page: number;
+  limit?: number;
+};
+
+export type ListUsersErrorCodes = 'UNKNOWN';
+export type ListUsersError = FailureError<ListUsersErrorCodes>;
+export type ListUsersResult = Result<ListUsersError, User[]>;
+
+export const listUsers = async (
+  params: ListUsersParams,
+): Promise<ListUsersResult> => {
+  const users = await db.users.listUsers(params);
+
+  if (isFailure(users)) return users;
+
+  return success(users.data);
 };

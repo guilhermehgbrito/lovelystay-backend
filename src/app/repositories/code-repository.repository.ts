@@ -8,6 +8,8 @@ import {
 import { failure, success, Result } from '@/logic/result';
 import { CodeRepository } from '../models/code-repository.model';
 import { logger } from '@/lib/logger';
+import { codeRepositoryMapper } from '../mappers/code-repository.mapper';
+import { CodeRepositoryEntity } from '../entities/code-repository.entity';
 
 const handleError = <T>(error: unknown): Result<SaveCodeRepositoryError, T> => {
   logger.error({
@@ -68,11 +70,11 @@ export const createCodeRepositoryRepository = (
           'ON CONFLICT ("owner_id", "name") DO UPDATE SET ' +
           saveManyColumns.assignColumns({ from: 'EXCLUDED' });
         const returning =
-          'RETURNING "id", "owner_id" AS "ownerId", "name", "description", "remote_name" AS "remoteName", "languages", "created_at" AS "createdAt", "updated_at" AS "updatedAt"';
-        const result = await db.many(
+          'RETURNING "id", "owner_id", "name", "description", "remote_name", "languages", "created_at", "updated_at"';
+        const result = await db.many<CodeRepositoryEntity>(
           `${insertQuery} ${onConflict} ${returning}`,
         );
-        return success(result);
+        return success(result.map(codeRepositoryMapper.fromEntityToModel));
       } catch (error) {
         return handleError(error);
       }

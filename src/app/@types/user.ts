@@ -22,6 +22,16 @@ export type FindByGithubUsernameResult = Result<
   User | null
 >;
 
+export type ListUsersParams = {
+  page: number;
+  limit?: number;
+};
+
+export type ListUsersErrorCodes = 'UNKNOWN';
+export type ListUsersError = FailureError<ListUsersErrorCodes>;
+
+export type ListUsersResult = Result<ListUsersError, User[]>;
+
 export type UserRepository = {
   /**
    * Save a user
@@ -37,6 +47,12 @@ export type UserRepository = {
   findByGithubUsername: (
     params: FindByGithubUsernameParams,
   ) => Promise<FindByGithubUsernameResult>;
+  /**
+   * List users
+   * @param {ListUsersParams} params
+   * @returns {Promise<ListUsersResult>}
+   */
+  listUsers: (params: ListUsersParams) => Promise<ListUsersResult>;
 };
 
 declare global {

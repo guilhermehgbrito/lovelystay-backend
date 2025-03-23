@@ -3,8 +3,10 @@ import { isFailure } from '@/logic/result';
 import {
   findByGithubUsername,
   fetchFromGithubAndSave,
+  listUsers,
 } from '@/app/services/user.service';
 import { logger } from '@/lib/logger';
+import { USER_LISTING_DEFAULT_LIMIT } from '@/app/constants/user.constants';
 
 export const user = new Command().command('user').description('User commands');
 const outputTypes = ['json', 'csv', 'table'] as const;
@@ -69,4 +71,33 @@ user
     }
 
     printOutput([user.data], { outputType: options.outputType });
+  });
+
+user
+  .command('list')
+  .description('List users')
+  .addOption(outputTypeOption)
+  .option('-p, --page <page>', 'The page number to fetch', '1')
+  .option(
+    '-l, --limit <limit>',
+    'The number of users to fetch',
+    USER_LISTING_DEFAULT_LIMIT.toString(),
+  )
+  .action(async (options) => {
+    const users = await listUsers({
+      page: parseInt(options.page),
+      limit: parseInt(options.limit),
+    });
+
+    if (isFailure(users)) {
+      logger.error({
+        message: 'Failed to list users',
+        data: {
+          error: users.error,
+        },
+      });
+      return;
+    }
+
+    printOutput(users.data, { outputType: options.outputType });
   });

@@ -1,0 +1,1 @@
+export const USER_LISTING_DEFAULT_LIMIT = 20;
