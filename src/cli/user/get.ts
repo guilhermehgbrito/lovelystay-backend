@@ -10,16 +10,15 @@ import {
 } from '../common/output-type';
 import { z } from 'zod';
 import { coalesce } from '@/logic/coalesce';
+import { usernameSchema } from '../common/username';
 
 const getUserOptionsSchema = z.object({
+  username: usernameSchema,
   force: z.boolean().default(false),
   outputType: outputTypeSchema,
 });
 
-const getUserAction = async (
-  username: string,
-  options: z.infer<typeof getUserOptionsSchema>,
-) => {
+const getUserAction = async (options: z.infer<typeof getUserOptionsSchema>) => {
   const parsedOptions = getUserOptionsSchema.safeParse(options);
 
   if (!parsedOptions.success) {
@@ -30,16 +29,20 @@ const getUserAction = async (
     return;
   }
 
-  const functions = [() => findByGithubUsername({ githubUsername: username })];
+  const functions = [
+    () => findByGithubUsername({ githubUsername: parsedOptions.data.username }),
+  ];
 
   // If the force option is set, we fetch the user from the GitHub API first
   // Otherwise, we try to find the user in the database first and only fetch from the GitHub API if the user is not found
   if (parsedOptions.data.force) {
     functions.unshift(() =>
-      fetchFromGithubAndSave({ githubUsername: username }),
+      fetchFromGithubAndSave({ githubUsername: parsedOptions.data.username }),
     );
   } else {
-    functions.push(() => fetchFromGithubAndSave({ githubUsername: username }));
+    functions.push(() =>
+      fetchFromGithubAndSave({ githubUsername: parsedOptions.data.username }),
+    );
   }
 
   const userResult = await coalesce(...functions);
@@ -65,4 +68,4 @@ export const getUserCommand = new Command()
     'Force the user to be fetched from the GitHub API',
     false,
   )
-  .action(getUserAction);
+  .action((username, options) => getUserAction({ username, ...options }));

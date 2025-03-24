@@ -13,6 +13,14 @@ import { Result, isFailure } from '@/logic/result';
 import { z } from 'zod';
 import { Command } from 'commander';
 
+const languageSchema = z
+  .string()
+  .regex(
+    /^[a-zA-Z0-9\s\-#.]{1,32}$/,
+    'Language must contain only alphanumeric characters, spaces, hyphens, and dots. Should be less than 32 characters',
+  )
+  .transform((val) => val?.trim().replace(/[^\w.#-]/g, ''));
+
 const listOptionsSchema = z.object({
   page: z.coerce
     .number()
@@ -20,9 +28,15 @@ const listOptionsSchema = z.object({
     .default(1)
     .transform((val) => val || 1),
   limit: z.coerce.number().min(1).max(100).default(USER_LISTING_DEFAULT_LIMIT),
-  location: z.string().optional(),
-  languages: z.array(z.string()).optional(),
-  language: z.string().optional(),
+  location: z
+    .string()
+    .regex(
+      /^[a-zA-Z0-9\s-]{1,64}$/,
+      'Location must contain only alphanumeric characters, spaces, and hyphens. Should be less than 64 characters',
+    )
+    .optional(),
+  languages: z.array(languageSchema).optional(),
+  language: languageSchema.optional(),
   outputType: outputTypeSchema,
 });
 

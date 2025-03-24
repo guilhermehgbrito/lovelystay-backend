@@ -3,9 +3,10 @@ import { z } from 'zod';
 import { isFailure } from '@/logic/result';
 import { logger } from '@/lib/logger';
 import { fetchAndSaveCodeRepositories } from '@/app/services/code-repository.service';
+import { usernameSchema } from '../common/username';
 
 const pullSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
+  username: usernameSchema,
 });
 
 async function pullAction(username: string): Promise<void> {
