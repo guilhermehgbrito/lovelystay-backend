@@ -4,6 +4,7 @@ import {
   Result,
   FailureError,
   failure,
+  Success,
 } from '@/logic/result';
 import { findByGithubUsername } from './user.service';
 import { GitHubErrorCodes, GitHubRepository } from '@/lib/github/types';
@@ -11,9 +12,9 @@ import {
   getGitHubRepositoryLanguages,
   getGitHubUserRepositoriesStream,
 } from '@/lib/github/api/users';
-import { db } from '@/lib/db';
 import { ProgrammingLanguage } from '../models/code-repository.model';
 import { logger } from '@/lib/logger';
+import { saveManyCodeRepositories } from '../data/code-repository.data';
 
 export type FetchAndSaveCodeRepositoriesParams = {
   githubUsername: string;
@@ -59,7 +60,7 @@ export const fetchAndSaveCodeRepositories = async (
     ownerId = user.data.id;
   }
 
-  let totalSaved = 0;
+  let repositoryCount = 0;
   let totalFailed = 0;
 
   for await (const repositories of getGitHubUserRepositoriesStream({
@@ -70,16 +71,7 @@ export const fetchAndSaveCodeRepositories = async (
       repositories,
     });
 
-    if (isFailure(languages)) {
-      totalFailed += repositories.length;
-      continue;
-    }
-
-    totalSaved += repositories.length;
-
-    if (isFailure(languages)) return languages;
-
-    const savedRepositories = await db.codeRepositories.saveMany(
+    const savedRepositories = await saveManyCodeRepositories(
       repositories.map((r, i) => ({
         ownerId,
         name: r.name,
@@ -96,12 +88,13 @@ export const fetchAndSaveCodeRepositories = async (
           errors: savedRepositories.error,
         },
       });
-
       totalFailed += repositories.length;
     }
+
+    repositoryCount += repositories.length;
   }
 
-  return success({ totalSaved, totalFailed });
+  return success({ totalSaved: repositoryCount - totalFailed, totalFailed });
 };
 
 export type FetchLanguagesForRepositoriesParams = {
@@ -114,8 +107,7 @@ export type FetchLanguagesForRepositoriesErrorCodes =
   | GitHubErrorCodes;
 export type FetchLanguagesForRepositoriesError =
   FailureError<FetchLanguagesForRepositoriesErrorCodes>;
-export type FetchLanguagesForRepositoriesResult = Result<
-  FetchLanguagesForRepositoriesError,
+export type FetchLanguagesForRepositoriesResult = Success<
   ProgrammingLanguage[][]
 >;
 

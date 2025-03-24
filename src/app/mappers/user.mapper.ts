@@ -1,4 +1,4 @@
-import { SaveUserParams } from '../@types/user';
+import { SaveUserParams } from '../data/user.data';
 import { GitHubUser } from '@/lib/github/types';
 import { UserEntity } from '../entities/user.entity';
 import { User } from '../models/user.model';

@@ -1,10 +1,15 @@
 import { FailureError, isFailure, Result, success } from '@/logic/result';
 import { getGitHubUser } from '@/lib/github/api/users';
-import { db } from '@/lib/db';
 import { GitHubErrorCodes } from '@/lib/github/types';
 import { User } from '../models/user.model';
 import { fetchAndSaveCodeRepositories } from './code-repository.service';
 import { userMapper } from '../mappers/user.mapper';
+import {
+  listUsers as listUsersData,
+  saveUser,
+  filterUsers as filterUsersData,
+  findByGithubUsername as findByGithubUsernameData,
+} from '../data/user.data';
 
 export type FindByGithubUsernameParams = {
   githubUsername: string;
@@ -27,7 +32,7 @@ export type FindByGithubUsernameResult = Result<
 export const findByGithubUsername = async (
   params: FindByGithubUsernameParams,
 ): Promise<FindByGithubUsernameResult> => {
-  const userFromDb = await db.users.findByGithubUsername(params);
+  const userFromDb = await findByGithubUsernameData(params);
 
   if (isFailure(userFromDb)) return userFromDb;
 
@@ -60,7 +65,7 @@ export const fetchFromGithubAndSave = async (
 
   if (isFailure(userFromGithub)) return userFromGithub;
 
-  const userFromDb = await db.users.save(
+  const userFromDb = await saveUser(
     userMapper.fromGithubUserToSaveUserParams(userFromGithub.data),
   );
 
@@ -77,7 +82,7 @@ export const fetchFromGithubAndSave = async (
 };
 
 export type ListUsersParams = {
-  page: number;
+  page?: number;
   limit?: number;
 };
 
@@ -88,7 +93,7 @@ export type ListUsersResult = Result<ListUsersError, User[]>;
 export const listUsers = async (
   params: ListUsersParams,
 ): Promise<ListUsersResult> => {
-  const users = await db.users.listUsers(params);
+  const users = await listUsersData(params);
 
   if (isFailure(users)) return users;
 
@@ -96,20 +101,24 @@ export const listUsers = async (
 };
 
 export type FilterUsersParams = {
-  page: number;
+  page?: number;
   limit?: number;
   location?: string;
   languages?: string[];
 };
 
+export type UserWithLanguages = User & {
+  languages: string[];
+};
+
 export type FilterUsersErrorCodes = 'UNKNOWN';
 export type FilterUsersError = FailureError<FilterUsersErrorCodes>;
-export type FilterUsersResult = Result<FilterUsersError, User[]>;
+export type FilterUsersResult = Result<FilterUsersError, UserWithLanguages[]>;
 
 export const filterUsers = async (
   params: FilterUsersParams,
 ): Promise<FilterUsersResult> => {
-  const users = await db.users.filterUsers(params);
+  const users = await filterUsersData(params);
 
   if (isFailure(users)) return users;
 

@@ -1,10 +1,19 @@
 import { readdir, writeFile } from 'node:fs/promises';
 import { MIGRATION_FILE_PATH } from '../constants/migrations.constants';
-import { Result, failure, isFailure, success } from '@/logic/result';
-import { MigrationsError } from '../@types/migrations';
+import {
+  FailureError,
+  Result,
+  failure,
+  isFailure,
+  success,
+} from '@/logic/result';
 import { logger } from '@/lib/logger';
 import { db, pgp } from '@/lib/db';
 import path from 'node:path';
+
+export type MigrationsErrorCodes = 'UNKNOWN';
+export type MigrationsError = FailureError<MigrationsErrorCodes>;
+
 /**
  * Create a new migration file
  * @param name - The name of the migration

@@ -5,7 +5,7 @@ import {
   ListUsersError,
   FilterUsersError,
   UserWithLanguages,
-} from '@/app/@types/user';
+} from '@/app/services/user.service';
 import { User } from '@/app/models/user.model';
 import { filterUsers, listUsers } from '@/app/services/user.service';
 import { logger } from '@/lib/logger';
@@ -16,10 +16,10 @@ import { Command } from 'commander';
 const languageSchema = z
   .string()
   .regex(
-    /^[a-zA-Z0-9\s\-#.]{1,32}$/,
-    'Language must contain only alphanumeric characters, spaces, hyphens, and dots. Should be less than 32 characters',
+    /^[a-zA-Z0-9\s\-#.+]{1,32}$/,
+    'Language must contain only alphanumeric characters, spaces, hyphens, dots, and plus signs. Should be less than 32 characters',
   )
-  .transform((val) => val?.trim().replace(/[^\w.#-]/g, ''));
+  .transform((val) => val?.trim().replace(/[^\w.#+-]/g, ''));
 
 const listOptionsSchema = z.object({
   page: z.coerce
@@ -35,7 +35,7 @@ const listOptionsSchema = z.object({
       'Location must contain only alphanumeric characters, spaces, and hyphens. Should be less than 64 characters',
     )
     .optional(),
-  languages: z.array(languageSchema).optional(),
+  languages: z.array(languageSchema).max(10).optional(),
   language: languageSchema.optional(),
   outputType: outputTypeSchema,
 });
