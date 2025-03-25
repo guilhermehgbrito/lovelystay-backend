@@ -18,6 +18,9 @@
         - [Pagination](#pagination)
         - [Output types](#output-types)
     - [Fetching repositories](#fetching-repositories)
+  - [Running the tests](#running-the-tests)
+    - [Unit tests](#unit-tests)
+    - [E2E tests](#e2e-tests)
 - [Requirements](#requirements)
   - [Coding Test Requirements](#coding-test-requirements)
   - [Functional Requirements](#functional-requirements)
@@ -221,6 +224,40 @@ pnpm run start repo pull <username>
 
 This will fetch the repositories from the given GitHub user and store them on the database.
 
+<!-- TOC --><a name="running-the-tests"></a>
+### Running the tests
+
+Unit tests are defined under `__tests__` directories and are executed by Jest.
+
+To add mocks, you can leverage the `jest.mock` function, and the auto-mocking feature of Jest, which it is done when a file is put under `__mocks__` directory, on the same level as the file you want to mock.
+
+See the [Jest documentation](https://jestjs.io/docs/manual-mocks#mocking-user-modules) for more information.
+
+<!-- TOC --><a name="unit-tests"></a>
+#### Unit tests
+
+To run the unit tests, you can use the following command:
+
+```bash
+pnpm run test
+```
+
+This will run the tests in the all `__tests__` directories.
+
+<!-- TOC --><a name="e2e-tests"></a>
+#### E2E tests
+
+To run the E2E tests, you should have the Docker Compose file `docker-compose.e2e.yml` running.
+
+For that, you can use the following command:
+
+```bash
+docker compose -f docker-compose.e2e.yml up -d  --abort-on-container-exit
+```
+
+The flag `--abort-on-container-exit` is used to stop the database when the tests are finished.
+
+
 <!-- TOC --><a name="requirements"></a>
 ## Requirements
 
@@ -254,6 +291,6 @@ This will fetch the repositories from the given GitHub user and store them on th
 - [X] NFR3: Display output should be human-readable and easy to understand;
 - [X] NFR4: The CLI should be configurable via environment variables and/or command-line arguments (e.g. `GITHUB_API_KEY`, `DATABASE_URL`, etc.);
 - [X] NFR5: The code should be well-documented with JSDoc;
-- [ ] NFR6: The code should be tested with Jest (unit, integration, and E2E);
+- [X] NFR6: The code should be tested with Jest (unit, and E2E);
 - [X] NFR7: The repository should have a how-to-use guide;
 - [X] NFR8: Code should follow established linting and formatting rules;

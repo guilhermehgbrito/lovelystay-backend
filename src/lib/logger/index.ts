@@ -11,3 +11,9 @@ export const logger = createLogger({
   ),
   transports: [new transports.Console()],
 });
+
+if (logLevel === 'silent') {
+  logger.transports.forEach((transport) => {
+    transport.silent = true;
+  });
+}

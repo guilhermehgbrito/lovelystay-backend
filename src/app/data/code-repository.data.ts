@@ -52,11 +52,11 @@ export const saveCodeRepository = async (
 ): Promise<SaveCodeRepositoryResult> => {
   const connection = conn ?? db;
   try {
-    const result = await connection.one<CodeRepository>(
+    const result = await connection.one<CodeRepositoryEntity>(
       codeRepositorySql.saveCodeRepository,
       codeRepository,
     );
-    return success(result);
+    return success(codeRepositoryMapper.fromEntityToModel(result));
   } catch (error) {
     return handleError(error);
   }

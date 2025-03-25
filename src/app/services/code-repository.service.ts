@@ -119,14 +119,6 @@ export type FetchLanguagesForRepositoriesResult = Success<
 export const fetchLanguagesForRepositories = async (
   params: FetchLanguagesForRepositoriesParams,
 ): Promise<FetchLanguagesForRepositoriesResult> => {
-  logger.info({
-    message: 'Fetching languages for repositories',
-    data: {
-      githubUsername: params.githubUsername,
-      repositories: params.repositories.length,
-    },
-  });
-
   const languages = await Promise.all(
     params.repositories.map(async (repository) => {
       const languages = await getGitHubRepositoryLanguages({

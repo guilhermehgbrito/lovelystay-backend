@@ -86,7 +86,7 @@ export const getGitHubUserRepositories = async ({
     return success({
       repositories: data as GitHubRepository[],
       totalPages,
-      nextPage: totalPages > page ? page + 1 : null,
+      nextPage: links?.next?.page ? parseInt(links.next.page) : null,
     });
   } catch (error) {
     return failure<GitHubError>({

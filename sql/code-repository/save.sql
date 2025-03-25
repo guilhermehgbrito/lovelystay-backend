@@ -1,5 +1,5 @@
-INSERT INTO code_repositories ("owner_id", "name", "description", "remote", "languages") 
-VALUES (${ownerId}, ${name}, ${description}, ${remote}, ${languages}:array) 
+INSERT INTO code_repositories ("owner_id", "name", "description", "remote_name", "languages") 
+VALUES (${ownerId}, ${name}, ${description}, ${remoteName}, ${languages}) 
 ON CONFLICT ("owner_id", "name") DO UPDATE 
-SET "description" = ${description}, "remote" = ${remote}, "languages" = ${languages}:array, "updated_at" = CURRENT_TIMESTAMP
-RETURNING "id", "owner_id", "name", "description", "remote", "languages", "created_at", "updated_at";
+SET "description" = ${description}, "remote_name" = ${remoteName}, "languages" = ${languages}, "updated_at" = CURRENT_TIMESTAMP
+RETURNING "id", "owner_id", "name", "description", "remote_name", "languages", "created_at", "updated_at";

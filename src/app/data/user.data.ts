@@ -159,7 +159,9 @@ export const filterUsers = async (
     conditions.push(
       '"get_user_languages"("users"."id") @> ${languages}::text[]',
     );
-    values.languages = uniqueLanguages;
+    values.languages = uniqueLanguages.map((language) =>
+      language.toLowerCase(),
+    );
   }
 
   if (location) {
