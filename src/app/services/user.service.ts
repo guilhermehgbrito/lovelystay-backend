@@ -1,0 +1,126 @@
+import { FailureError, isFailure, Result, success } from '@/logic/result';
+import { getGitHubUser } from '@/lib/github/api/users';
+import { GitHubErrorCodes } from '@/lib/github/types';
+import { User } from '../models/user.model';
+import { fetchAndSaveCodeRepositories } from './code-repository.service';
+import { userMapper } from '../mappers/user.mapper';
+import {
+  listUsers as listUsersData,
+  saveUser,
+  filterUsers as filterUsersData,
+  findByGithubUsername as findByGithubUsernameData,
+} from '../data/user.data';
+
+export type FindByGithubUsernameParams = {
+  githubUsername: string;
+};
+
+export type FindByGithubUsernameErrorCodes = 'UNKNOWN' | GitHubErrorCodes;
+export type FindByGithubUsernameError =
+  FailureError<FindByGithubUsernameErrorCodes>;
+
+export type FindByGithubUsernameResult = Result<
+  FindByGithubUsernameError,
+  User | null
+>;
+
+/**
+ * Find a user by their github username
+ * @param {FindByGithubUsernameParams} params
+ * @returns {Promise<FindByGithubUsernameResult>}
+ */
+export const findByGithubUsername = async (
+  params: FindByGithubUsernameParams,
+): Promise<FindByGithubUsernameResult> => {
+  const userFromDb = await findByGithubUsernameData(params);
+
+  if (isFailure(userFromDb)) return userFromDb;
+
+  return success(userFromDb.data);
+};
+
+export type FetchFromGithubAndSaveParams = {
+  githubUsername: string;
+};
+
+export type FetchFromGithubAndSaveErrorCodes = 'UNKNOWN' | GitHubErrorCodes;
+export type FetchFromGithubAndSaveError =
+  FailureError<FetchFromGithubAndSaveErrorCodes>;
+export type FetchFromGithubAndSaveResult = Result<
+  FetchFromGithubAndSaveError,
+  User
+>;
+
+/**
+ * Find a user from the github api and save it to the database
+ * @param {FetchFromGithubAndSaveParams} params
+ * @returns {Promise<FetchFromGithubAndSaveResult>}
+ */
+export const fetchFromGithubAndSave = async (
+  params: FetchFromGithubAndSaveParams,
+): Promise<FetchFromGithubAndSaveResult> => {
+  const userFromGithub = await getGitHubUser({
+    username: params.githubUsername,
+  });
+
+  if (isFailure(userFromGithub)) return userFromGithub;
+
+  const userFromDb = await saveUser(
+    userMapper.fromGithubUserToSaveUserParams(userFromGithub.data),
+  );
+
+  if (isFailure(userFromDb)) return userFromDb;
+
+  const repositoriesCount = await fetchAndSaveCodeRepositories({
+    githubUsername: params.githubUsername,
+    ownerId: userFromDb.data.id,
+  });
+
+  if (isFailure(repositoriesCount)) return repositoriesCount;
+
+  return success(userFromDb.data);
+};
+
+export type ListUsersParams = {
+  page?: number;
+  limit?: number;
+};
+
+export type ListUsersErrorCodes = 'UNKNOWN';
+export type ListUsersError = FailureError<ListUsersErrorCodes>;
+export type ListUsersResult = Result<ListUsersError, User[]>;
+
+export const listUsers = async (
+  params: ListUsersParams,
+): Promise<ListUsersResult> => {
+  const users = await listUsersData(params);
+
+  if (isFailure(users)) return users;
+
+  return success(users.data);
+};
+
+export type FilterUsersParams = {
+  page?: number;
+  limit?: number;
+  location?: string;
+  languages?: string[];
+};
+
+export type UserWithLanguages = User & {
+  languages: string[];
+};
+
+export type FilterUsersErrorCodes = 'UNKNOWN';
+export type FilterUsersError = FailureError<FilterUsersErrorCodes>;
+export type FilterUsersResult = Result<FilterUsersError, UserWithLanguages[]>;
+
+export const filterUsers = async (
+  params: FilterUsersParams,
+): Promise<FilterUsersResult> => {
+  const users = await filterUsersData(params);
+
+  if (isFailure(users)) return users;
+
+  return success(users.data);
+};

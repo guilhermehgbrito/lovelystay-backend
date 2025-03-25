@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Program",
+            "skipFiles": [
+                "<node_internals>/**",
+                "${workspaceFolder}/node_modules/**"
+            ],
+            "runtimeExecutable": "tsx",
+            "runtimeArgs": [
+                "--env-file",
+                "${workspaceFolder}/.env",
+                "--inspect-brk",
+                "src/main.ts"
+            ],
+            "args": [
+                "repo",
+                "pull",
+                "maykbrito"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        }
+    ]
+}
